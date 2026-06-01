@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>100 Movie Canon Randomizer</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <main class="app-shell">
+    <section class="hero">
+      <p class="eyebrow">Balanced 100 Movie Canon</p>
+      <h1>Movie Randomizer</h1>
+      <p class="subtitle">Pick a film completely at random, or select a rolled-up genre and get an unwatched movie from that genre.</p>
+    </section>
+
+    <section class="panel">
+      <h2>1. Load your Excel movie database</h2>
+      <p>The app reads the <strong>Movies</strong> sheet from <code>movie_database.xlsx</code>. Update the Excel any time, then reload it here.</p>
+      <div class="file-row">
+        <input id="fileInput" type="file" accept=".xlsx,.xls" />
+        <button id="resetLocalBtn" class="secondary">Clear local watched data</button>
+      </div>
+      <p id="loadStatus" class="status">No Excel file loaded yet.</p>
+    </section>
+
+    <section class="dashboard">
+      <div class="stat-card"><span id="totalCount">0</span><small>Total movies</small></div>
+      <div class="stat-card"><span id="watchedCount">0</span><small>Watched</small></div>
+      <div class="stat-card"><span id="unwatchedCount">0</span><small>Unwatched</small></div>
+    </section>
+
+    <section class="panel picker-panel">
+      <h2>2. Pick your mode</h2>
+      <div class="mode-grid">
+        <label class="mode-card">
+          <input type="radio" name="pickMode" value="all" checked />
+          <span>Completely random</span>
+          <small>Any unwatched movie from the full list.</small>
+        </label>
+        <label class="mode-card">
+          <input type="radio" name="pickMode" value="genre" />
+          <span>Pick by rolled-up genre</span>
+          <small>Example: slasher horror rolls up into Horror.</small>
+        </label>
+      </div>
+
+      <div id="genreControls" class="genre-controls hidden">
+        <label for="genreSelect">Rolled-up genre</label>
+        <select id="genreSelect"></select>
+      </div>
+
+      <button id="pickBtn" class="primary">Pick a movie</button>
+    </section>
+
+    <section id="resultPanel" class="result-panel hidden">
+      <p class="eyebrow">Your movie is</p>
+      <h2 id="resultTitle"></h2>
+      <dl class="result-meta">
+        <div><dt>Genre</dt><dd id="resultGenre"></dd></div>
+        <div><dt>Rolled-up genre</dt><dd id="resultRollup"></dd></div>
+        <div><dt>Country</dt><dd id="resultCountry"></dd></div>
+        <div><dt>Year</dt><dd id="resultYear"></dd></div>
+      </dl>
+      <div class="result-actions">
+        <button id="markWatchedBtn" class="primary">Mark as watched</button>
+        <button id="pickAgainBtn" class="secondary">Pick again</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>3. Save your progress</h2>
+      <p>When you mark a film as watched, it is stored in the browser and can also be exported back into Excel.</p>
+      <button id="downloadBtn" class="secondary">Download updated Excel</button>
+    </section>
+
+    <section class="panel table-panel">
+      <h2>Movie list</h2>
+      <div class="table-wrap">
+        <table id="movieTable">
+          <thead>
+            <tr><th>Movie</th><th>Rolled-up Genre</th><th>Year</th><th>Watched</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
