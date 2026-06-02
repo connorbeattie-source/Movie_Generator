@@ -6,6 +6,8 @@
   <title>100 Movie Canon Randomizer</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
 </head>
 <body>
   <main class="app-shell">
@@ -80,7 +82,16 @@
       <div class="table-wrap">
         <table id="movieTable">
           <thead>
-            <tr><th class="sortable" data-sort="title">Movie <span class="sort-indicator"></span></th><th class="sortable" data-sort="rollup">Genre <span class="sort-indicator"></span></th><th class="sortable" data-sort="genre">Sub Genre <span class="sort-indicator"></span></th><th class="sortable" data-sort="country">Country <span class="sort-indicator"></span></th><th class="sortable" data-sort="year">Year <span class="sort-indicator"></span></th><th class="sortable" data-sort="watched">Seen <span class="sort-indicator"></span></th><th>Comment</th><th class="sortable" data-sort="rating">Rating <span class="sort-indicator"></span></th></tr>
+            <tr>
+              <th class="sortable col-movie" data-sort="title">Movie <span class="sort-indicator"></span></th>
+              <th class="sortable col-genre" data-sort="rollup">Genre <span class="sort-indicator"></span></th>
+              <th class="sortable col-subgenre" data-sort="genre">Sub Genre <span class="sort-indicator"></span></th>
+              <th class="sortable col-country" data-sort="country">Country <span class="sort-indicator"></span></th>
+              <th class="sortable col-year" data-sort="year">Year <span class="sort-indicator"></span></th>
+              <th class="sortable col-seen" data-sort="watched">Seen <span class="sort-indicator"></span></th>
+              <th class="sortable col-rating" data-sort="rating">Rating <span class="sort-indicator"></span></th>
+              <th class="col-comment">Comment</th>
+            </tr>
           </thead>
           <tbody></tbody>
         </table>
@@ -89,7 +100,7 @@
 
     <section class="panel intro-panel bottom-info">
       <h2>Your movie data is loaded automatically</h2>
-      <p>The Excel file is included in the app background as <code>movie_database.xlsx</code>. Update that file in GitHub/Vercel when you want to maintain the master movie list.</p>
+      <p>The Excel file is included in the app background as <code>movie_database.xlsx</code>. Current recommendation and progress can sync across devices when Supabase is configured in <code>config.js</code>.</p>
       <div class="file-row">
         <button id="resetLocalBtn" class="secondary">Reset local progress</button>
         <button id="downloadBtn" class="secondary">Download updated Excel</button>
