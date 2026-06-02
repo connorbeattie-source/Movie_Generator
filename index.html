@@ -12,27 +12,28 @@
     <section class="hero">
       <p class="eyebrow">Balanced 100 Movie Canon</p>
       <h1>Movie Randomizer</h1>
-      <p class="subtitle">Pick a film completely at random, or select a rolled-up genre and get an unwatched movie from that genre.</p>
+      <p class="subtitle">Pick a film completely at random, or choose a genre and get an unwatched film from that category.</p>
     </section>
 
-    <section class="panel">
-      <h2>1. Load your Excel movie database</h2>
-      <p>The app reads the <strong>Movies</strong> sheet from <code>movie_database.xlsx</code>. Update the Excel any time, then reload it here.</p>
+    <section class="panel intro-panel">
+      <h2>Your movie database is loaded automatically</h2>
+      <p>The Excel file is included in the app background as <code>movie_database.xlsx</code>. Update that file in GitHub/Vercel when you want to maintain the master movie list.</p>
       <div class="file-row">
-        <input id="fileInput" type="file" accept=".xlsx,.xls" />
-        <button id="resetLocalBtn" class="secondary">Clear local watched data</button>
+        <button id="resetLocalBtn" class="secondary">Reset local progress</button>
+        <button id="downloadBtn" class="secondary">Download updated Excel</button>
       </div>
-      <p id="loadStatus" class="status">No Excel file loaded yet.</p>
+      <p id="loadStatus" class="status">Loading movie database…</p>
     </section>
 
     <section class="dashboard">
       <div class="stat-card"><span id="totalCount">0</span><small>Total movies</small></div>
       <div class="stat-card"><span id="watchedCount">0</span><small>Watched</small></div>
       <div class="stat-card"><span id="unwatchedCount">0</span><small>Unwatched</small></div>
+      <div class="stat-card"><span id="ratedCount">0</span><small>Rated</small></div>
     </section>
 
     <section class="panel picker-panel">
-      <h2>2. Pick your mode</h2>
+      <h2>Pick your mode</h2>
       <div class="mode-grid">
         <label class="mode-card">
           <input type="radio" name="pickMode" value="all" checked />
@@ -41,13 +42,13 @@
         </label>
         <label class="mode-card">
           <input type="radio" name="pickMode" value="genre" />
-          <span>Pick by rolled-up genre</span>
-          <small>Example: slasher horror rolls up into Horror.</small>
+          <span>Pick by genre</span>
+          <small>Example: slasher horror is grouped under Horror.</small>
         </label>
       </div>
 
       <div id="genreControls" class="genre-controls hidden">
-        <label for="genreSelect">Rolled-up genre</label>
+        <label for="genreSelect">Genre</label>
         <select id="genreSelect"></select>
       </div>
 
@@ -57,30 +58,35 @@
     <section id="resultPanel" class="result-panel hidden">
       <p class="eyebrow">Your movie is</p>
       <h2 id="resultTitle"></h2>
+      <p id="resultSummary" class="summary"></p>
       <dl class="result-meta">
         <div><dt>Genre</dt><dd id="resultGenre"></dd></div>
-        <div><dt>Rolled-up genre</dt><dd id="resultRollup"></dd></div>
+        <div><dt>Specific genre</dt><dd id="resultSpecificGenre"></dd></div>
         <div><dt>Country</dt><dd id="resultCountry"></dd></div>
         <div><dt>Year</dt><dd id="resultYear"></dd></div>
       </dl>
       <div class="result-actions">
-        <button id="markWatchedBtn" class="primary">Mark as watched</button>
+        <label class="toggle-row"><input id="resultWatchedToggle" type="checkbox" /> Seen this movie</label>
+        <div class="star-control" aria-label="Rate this movie">
+          <span>Rate:</span>
+          <button data-rating="1" aria-label="1 star">★</button>
+          <button data-rating="2" aria-label="2 stars">★</button>
+          <button data-rating="3" aria-label="3 stars">★</button>
+          <button data-rating="4" aria-label="4 stars">★</button>
+          <button data-rating="5" aria-label="5 stars">★</button>
+          <button id="clearRatingBtn" class="tiny" type="button">Clear</button>
+        </div>
         <button id="pickAgainBtn" class="secondary">Pick again</button>
       </div>
     </section>
 
-    <section class="panel">
-      <h2>3. Save your progress</h2>
-      <p>When you mark a film as watched, it is stored in the browser and can also be exported back into Excel.</p>
-      <button id="downloadBtn" class="secondary">Download updated Excel</button>
-    </section>
-
     <section class="panel table-panel">
       <h2>Movie list</h2>
+      <p class="status">Toggle watched status and ratings directly from the table. Watched films are excluded from future random picks.</p>
       <div class="table-wrap">
         <table id="movieTable">
           <thead>
-            <tr><th>Movie</th><th>Rolled-up Genre</th><th>Year</th><th>Watched</th></tr>
+            <tr><th>Movie</th><th>Genre</th><th>Specific genre</th><th>Country</th><th>Year</th><th>Seen</th><th>Rating</th></tr>
           </thead>
           <tbody></tbody>
         </table>
