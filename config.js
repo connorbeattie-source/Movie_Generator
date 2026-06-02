@@ -1,11 +1,8 @@
 // Supabase configuration for cross-device persistence.
-// 1) Create a Supabase project.
-// 2) Run the SQL in supabase_setup.sql.
-// 3) Paste your Project URL and anon public key below.
-// The anon key is safe to use in a browser when Row Level Security policies are set as provided.
+// This app uses the anon public key only. Do not place a service_role key here.
 
 window.MOVIE_APP_CONFIG = {
-  supabaseUrl: 'PASTE_YOUR_SUPABASE_PROJECT_URL_HERE',
-  supabaseAnonKey: 'PASTE_YOUR_SUPABASE_ANON_PUBLIC_KEY_HERE',
+  supabaseUrl: 'https://tcfeemmosfbgnaaqdfia.supabase.co',
+  supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZmVlbW1vc2ZiZ25hYXFkZmlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MTk1MjksImV4cCI6MjA5NTk5NTUyOX0.jS9r0ElLTvMaEMzTrMaOUGhQ7WDKFCjuIkBdO7SaylQ',
   sharedProfileId: 'default'
 };

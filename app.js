@@ -4,16 +4,25 @@ let workbook = null;
 let worksheetName = 'Movies';
 
 const DATABASE_FILE = 'movie_database.xlsx';
-const PROGRESS_KEY = 'balancedMovieCanonProgressV5';
-const LEGACY_PROGRESS_KEYS = ['balancedMovieCanonProgressV4', 'balancedMovieCanonProgressV3', 'balancedMovieCanonProgressV2'];
-const CURRENT_PICK_KEY = 'balancedMovieCanonCurrentPickV6';
-const LEGACY_CURRENT_PICK_KEYS = ['balancedMovieCanonCurrentPickV5', 'balancedMovieCanonCurrentPickV4'];
+const PROGRESS_KEY = 'balancedMovieCanonProgressV8';
+const LEGACY_PROGRESS_KEYS = [
+  'balancedMovieCanonProgressV5',
+  'balancedMovieCanonProgressV4',
+  'balancedMovieCanonProgressV3',
+  'balancedMovieCanonProgressV2'
+];
+const CURRENT_PICK_KEY = 'balancedMovieCanonCurrentPickV8';
+const LEGACY_CURRENT_PICK_KEYS = [
+  'balancedMovieCanonCurrentPickV6',
+  'balancedMovieCanonCurrentPickV5',
+  'balancedMovieCanonCurrentPickV4'
+];
 
 let supabaseClient = null;
 let remoteEnabled = false;
 let remoteLoaded = false;
 let remoteState = { progress: {}, currentPickKey: '' };
-let remoteSaveTimer = null;
+let lastSaveStatus = '';
 
 let sortState = { key: null, direction: 'asc' };
 let movieSearchQuery = '';
@@ -55,49 +64,80 @@ function getConfig() {
   return window.MOVIE_APP_CONFIG || {};
 }
 
+function getProfileId() {
+  return getConfig().sharedProfileId || 'default';
+}
+
 function hasSupabaseConfig() {
   const cfg = getConfig();
   return cfg.supabaseUrl && cfg.supabaseAnonKey && !String(cfg.supabaseUrl).includes('PASTE_') && !String(cfg.supabaseAnonKey).includes('PASTE_');
 }
 
+function setLoadStatus(message) {
+  els.loadStatus.textContent = message;
+}
+
+function setSaveStatus(message) {
+  lastSaveStatus = message;
+  if (movies.length) {
+    const syncText = remoteEnabled
+      ? `Shared sync active. ${lastSaveStatus}`
+      : 'Shared sync is not configured, so recommendation, watched status, ratings and comments are saved in this browser only.';
+    setLoadStatus(`Loaded ${movies.length} movies from the embedded Excel database. ${syncText}`);
+  }
+}
+
 async function initRemoteState() {
   if (!hasSupabaseConfig() || !window.supabase) {
     remoteEnabled = false;
+    remoteLoaded = false;
     return;
   }
 
+  const profileId = getProfileId();
   const cfg = getConfig();
   supabaseClient = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  const profileId = cfg.sharedProfileId || 'default';
 
   try {
-    const { data, error } = await supabaseClient
-      .from('movie_app_state')
-      .select('current_pick_key, progress')
+    await supabaseClient
+      .from('movie_app_recommendation')
+      .upsert({ profile_id: profileId, current_pick_key: null, updated_at: new Date().toISOString() }, { onConflict: 'profile_id', ignoreDuplicates: true });
+
+    const { data: recommendationData, error: recommendationError } = await supabaseClient
+      .from('movie_app_recommendation')
+      .select('current_pick_key')
       .eq('profile_id', profileId)
-      .single();
+      .maybeSingle();
+    if (recommendationError) throw recommendationError;
 
-    if (error && error.code !== 'PGRST116') throw error;
+    const { data: progressRows, error: progressError } = await supabaseClient
+      .from('movie_app_progress')
+      .select('movie_key, watched, rating, comment, date_watched')
+      .eq('profile_id', profileId);
+    if (progressError) throw progressError;
 
-    if (!data) {
-      await supabaseClient.from('movie_app_state').insert({
-        profile_id: profileId,
-        current_pick_key: null,
-        progress: {}
-      });
-    } else {
-      remoteState = {
-        currentPickKey: data.current_pick_key || '',
-        progress: data.progress && typeof data.progress === 'object' ? data.progress : {}
+    remoteState = {
+      currentPickKey: recommendationData?.current_pick_key || '',
+      progress: {}
+    };
+
+    (progressRows || []).forEach(row => {
+      remoteState.progress[row.movie_key] = {
+        watched: Boolean(row.watched),
+        rating: Number(row.rating) || 0,
+        comment: row.comment || '',
+        dateWatched: row.date_watched || ''
       };
-    }
+    });
 
     remoteEnabled = true;
     remoteLoaded = true;
+    lastSaveStatus = 'Database loaded.';
   } catch (error) {
     console.warn('Supabase sync unavailable, falling back to this browser only:', error);
     remoteEnabled = false;
     remoteLoaded = false;
+    lastSaveStatus = `Supabase sync error: ${error.message || error}. Browser-only fallback active.`;
   }
 }
 
@@ -124,7 +164,6 @@ function loadProgressStore() {
 function saveProgressStore(store) {
   localStorage.setItem(PROGRESS_KEY, JSON.stringify(store));
   remoteState.progress = store;
-  scheduleRemoteSave();
 }
 
 function getSavedCurrentPickKey() {
@@ -141,12 +180,83 @@ function getSavedCurrentPickKey() {
   return '';
 }
 
+async function saveRemoteCurrentPickNow(movieKeyValue) {
+  if (!remoteEnabled || !supabaseClient) return;
+  setSaveStatus('Saving recommendation to database…');
+  try {
+    const { error } = await supabaseClient
+      .from('movie_app_recommendation')
+      .upsert({
+        profile_id: getProfileId(),
+        current_pick_key: movieKeyValue || null,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'profile_id' })
+      .select('profile_id,current_pick_key')
+      .single();
+    if (error) throw error;
+    setSaveStatus('Recommendation saved to database.');
+  } catch (error) {
+    console.warn('Could not save current recommendation:', error);
+    setSaveStatus(`Could not save recommendation to database: ${error.message || error}`);
+  }
+}
+
 function saveCurrentPick(movie) {
   const key = movie ? movie.key : '';
   if (!key) localStorage.removeItem(CURRENT_PICK_KEY);
   else localStorage.setItem(CURRENT_PICK_KEY, key);
   remoteState.currentPickKey = key;
-  scheduleRemoteSave();
+  saveRemoteCurrentPickNow(key);
+}
+
+async function saveRemoteMovieNow(movie) {
+  if (!remoteEnabled || !supabaseClient || !movie) return;
+  setSaveStatus('Saving progress to database…');
+  try {
+    const { error } = await supabaseClient
+      .from('movie_app_progress')
+      .upsert({
+        profile_id: getProfileId(),
+        movie_key: movie.key,
+        watched: Boolean(movie.watched),
+        rating: Number(movie.rating) || 0,
+        comment: movie.comment || '',
+        date_watched: movie.dateWatched || null,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'profile_id,movie_key' })
+      .select('profile_id,movie_key,watched,rating,comment,date_watched')
+      .single();
+    if (error) throw error;
+    setSaveStatus('Progress saved to database.');
+  } catch (error) {
+    console.warn('Could not save movie progress:', error);
+    setSaveStatus(`Could not save progress to database: ${error.message || error}`);
+  }
+}
+
+async function deleteRemoteProgressNow() {
+  if (!remoteEnabled || !supabaseClient) return;
+  try {
+    const { error: deleteError } = await supabaseClient
+      .from('movie_app_progress')
+      .delete()
+      .eq('profile_id', getProfileId());
+    if (deleteError) throw deleteError;
+
+    const { error: recommendationError } = await supabaseClient
+      .from('movie_app_recommendation')
+      .upsert({
+        profile_id: getProfileId(),
+        current_pick_key: null,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'profile_id' });
+    if (recommendationError) throw recommendationError;
+
+    setSaveStatus('Progress reset in database.');
+  } catch (error) {
+    console.warn('Could not reset database progress:', error);
+    setSaveStatus(`Could not reset database progress: ${error.message || error}`);
+  }
 }
 
 function restoreCurrentPick() {
@@ -159,33 +269,6 @@ function restoreCurrentPick() {
   }
 }
 
-function scheduleRemoteSave() {
-  if (!remoteEnabled || !supabaseClient) return;
-  clearTimeout(remoteSaveTimer);
-  remoteSaveTimer = setTimeout(saveRemoteStateNow, 300);
-}
-
-async function saveRemoteStateNow() {
-  if (!remoteEnabled || !supabaseClient) return;
-  const cfg = getConfig();
-  const profileId = cfg.sharedProfileId || 'default';
-  const payload = {
-    profile_id: profileId,
-    current_pick_key: remoteState.currentPickKey || null,
-    progress: remoteState.progress || {},
-    updated_at: new Date().toISOString()
-  };
-
-  try {
-    const { error } = await supabaseClient
-      .from('movie_app_state')
-      .upsert(payload, { onConflict: 'profile_id' });
-    if (error) throw error;
-  } catch (error) {
-    console.warn('Could not save shared movie state:', error);
-  }
-}
-
 function persistMovie(movie) {
   const store = loadProgressStore();
   store[movie.key] = {
@@ -195,6 +278,7 @@ function persistMovie(movie) {
     comment: movie.comment || ''
   };
   saveProgressStore(store);
+  saveRemoteMovieNow(movie);
 }
 
 function isYes(value) {
@@ -238,9 +322,12 @@ async function loadEmbeddedWorkbook() {
     if (!response.ok) throw new Error(`Could not load ${DATABASE_FILE}.`);
     const arrayBuffer = await response.arrayBuffer();
     parseWorkbook(arrayBuffer);
-    els.loadStatus.textContent = `Loaded ${movies.length} movies from the embedded Excel database. ${remoteEnabled ? 'Shared sync is active: recommendation, watched status, ratings and comments are stored in Supabase.' : 'Shared sync is not configured, so recommendation, watched status, ratings and comments are saved in this browser only.'}`;
+    const syncText = remoteEnabled
+      ? `Shared sync active. ${lastSaveStatus || 'Database loaded.'}`
+      : (lastSaveStatus || 'Shared sync is not configured, so recommendation, watched status, ratings and comments are saved in this browser only.');
+    setLoadStatus(`Loaded ${movies.length} movies from the embedded Excel database. ${syncText}`);
   } catch (error) {
-    els.loadStatus.textContent = `Error: ${error.message} If running locally, use a local server rather than opening index.html directly.`;
+    setLoadStatus(`Error: ${error.message} If running locally, use a local server rather than opening index.html directly.`);
   }
 }
 
@@ -298,7 +385,7 @@ function sortedMoviesForTable() {
   const rows = movies.filter(movie => !query || movie.title.toLowerCase().includes(query));
   if (!sortState.key) return rows;
   const direction = sortState.direction === 'asc' ? 1 : -1;
-  return rows.sort((a, b) => {
+  return [...rows].sort((a, b) => {
     let av = a[sortState.key];
     let bv = b[sortState.key];
     if (sortState.key === 'year' || sortState.key === 'rating') {
@@ -380,7 +467,7 @@ function pickRandomMovie() {
   window.scrollTo({ top: els.resultPanel.offsetTop - 16, behavior: 'smooth' });
 }
 
-function renderResult(movie, options = {}) {
+function renderResult(movie) {
   els.resultTitle.textContent = movie.title;
   els.resultSummary.textContent = movie.summary || 'No summary available.';
   els.resultGenre.textContent = movie.rollup;
@@ -391,7 +478,6 @@ function renderResult(movie, options = {}) {
   renderResultStars(movie.rating);
   els.resultPanel.classList.remove('hidden');
 }
-
 
 function renderResultStars(rating) {
   const value = Number(rating) || 0;
@@ -461,36 +547,41 @@ els.movieSearch.addEventListener('input', () => {
   renderTable();
 });
 
-els.resetLocalBtn.addEventListener('click', () => {
-  if (!confirm('Reset watched status, ratings, comments and current recommendation?')) return;
+els.resetLocalBtn.addEventListener('click', async () => {
+  if (!confirm('Reset watched status, ratings, comments and current recommendation everywhere?')) return;
   localStorage.removeItem(PROGRESS_KEY);
   localStorage.removeItem(CURRENT_PICK_KEY);
   remoteState = { progress: {}, currentPickKey: '' };
-  scheduleRemoteSave();
+  await deleteRemoteProgressNow();
   movies = movies.map(m => ({ ...m, watched: false, rating: 0, dateWatched: '', comment: '' }));
   currentPick = null;
   els.resultPanel.classList.add('hidden');
   renderAll();
 });
+
 els.resultWatchedToggle.addEventListener('change', () => {
   if (!currentPick) return;
   setWatched(currentPick, els.resultWatchedToggle.checked);
 });
+
 els.resultStars.forEach(btn => btn.addEventListener('click', () => {
   if (!currentPick) return;
   const selectedRating = Number(btn.dataset.rating);
   const currentRating = Number(currentPick.rating) || 0;
   setRating(currentPick, currentRating === selectedRating ? 0 : selectedRating);
 }));
+
 els.clearRatingBtn.addEventListener('click', () => {
   if (!currentPick) return;
   setRating(currentPick, 0);
 });
+
 els.tableBody.addEventListener('change', event => {
   if (!event.target.classList.contains('watched-toggle')) return;
   const movie = findMovieByKey(event.target.dataset.key);
   if (movie) setWatched(movie, event.target.checked);
 });
+
 els.tableBody.addEventListener('input', event => {
   if (!event.target.classList.contains('comment-input')) return;
   const movie = findMovieByKey(event.target.dataset.key);

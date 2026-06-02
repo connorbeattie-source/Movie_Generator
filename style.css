@@ -125,8 +125,8 @@ dd { margin: 4px 0 0; font-weight: 800; }
 }
 .star-control button[data-rating].active, .table-star.active { color: var(--accent); }
 
-.table-wrap { overflow-x: hidden; max-height: 620px; overflow-y: auto; }
-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.table-wrap { max-height: 620px; overflow-y: auto; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 920px; }
 th, td { padding: 8px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; overflow-wrap: anywhere; word-break: normal; }
 th { position: sticky; top: 0; background: #0b1220; z-index: 1; }
 th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
@@ -160,7 +160,9 @@ tr.watched td:first-child strong { text-decoration: line-through; }
   .dashboard, .mode-grid, .result-meta { grid-template-columns: 1fr; }
   .app-shell { padding-left: 8px; padding-right: 8px; }
   .panel, .result-panel { padding: 14px; }
-  th, td { padding: 6px 4px; font-size: .78rem; }
+  .table-wrap { border: 1px solid var(--border); border-radius: 14px; }
+  table { min-width: 860px; }
+  th, td { padding: 7px 6px; font-size: .8rem; }
   td small { display: none; }
   .col-movie { width: 24%; }
   .col-genre { width: 11%; }

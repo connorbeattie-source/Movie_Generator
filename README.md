@@ -1,62 +1,31 @@
-# Movie Randomizer App v7
+# Movie Randomizer App v10
 
-This version loads `movie_database.xlsx` automatically in the background and uses Supabase as the shared cloud store for the current recommendation, watched status, ratings, and comments.
+This version is configured with the supplied Supabase Project URL and anon public key.
 
-## What is included
+## What syncs across phone and desktop
 
-- Random movie picker
-- Genre-based picker
-- Watched toggle
-- 1–5 star rating, with click-again-to-clear behaviour
-- Movie search
-- Sortable table columns
-- Comments field
-- Embedded Excel movie database
-- Optional Supabase sync for current recommendation, watched status, ratings and comments
+- Current recommended movie
+- Watched / seen status
+- 1–5 star rating
+- Comments
 
-## Important: cross-device persistence
+## Required Supabase step
 
-To make the current recommendation, watched status, ratings, and comments persist between phone and desktop, configure Supabase:
+Open Supabase → SQL Editor → New Query.
 
-1. Create a free Supabase project.
-2. Open Supabase → SQL Editor.
-3. Run the contents of `supabase_setup.sql`.
-4. Open `config.js`.
-5. Replace:
-   - `PASTE_YOUR_SUPABASE_PROJECT_URL_HERE`
-   - `PASTE_YOUR_SUPABASE_ANON_PUBLIC_KEY_HERE`
-6. Commit the updated files to GitHub.
-7. Vercel will redeploy.
+Paste and run the full contents of `supabase_setup.sql` from this v10 package.
 
-After that:
+This is required because v10 explicitly grants browser access to the two tables as well as creating Row Level Security policies.
 
-- If you pick a movie on your phone, the same recommendation will appear when you open the app on your desktop.
-- If you mark a film as watched on desktop, it will be excluded on phone.
-- If you add a rating or comment on one device, it will load on the other device when you reopen the app.
+## Deploy
 
-## Files
+Upload this full folder to Vercel, or replace the files in your GitHub repo and let Vercel redeploy.
 
-- `index.html` — app screen
-- `style.css` — styling
-- `app.js` — app logic
-- `config.js` — Supabase config
-- `supabase_setup.sql` — database setup script
-- `movie_database.xlsx` — editable movie database
+## How to verify
 
-## Maintaining the Excel list
+1. Open the deployed app.
+2. Mark one movie as seen or add a rating/comment.
+3. Look at the bottom status area. It should say `Progress saved to database.`
+4. In Supabase → Table Editor → `movie_app_progress`, check that a row appears.
 
-Update `movie_database.xlsx`, keep the same filename, and commit it to GitHub. Vercel will redeploy automatically.
-
-## Local testing
-
-Do not open `index.html` directly from Finder/File Explorer. Use a local server, for example:
-
-```bash
-python3 -m http.server 8000
-```
-
-Then open:
-
-```text
-http://localhost:8000
-```
+If it says `Could not save progress to database`, copy the full message from the bottom status area.
