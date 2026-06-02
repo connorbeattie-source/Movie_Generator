@@ -15,15 +15,6 @@
       <p class="subtitle">Pick a film completely at random, or choose a genre and get an unwatched film from that category.</p>
     </section>
 
-    <section class="panel intro-panel">
-      <h2>Your movie database is loaded automatically</h2>
-      <p>The Excel file is included in the app background as <code>movie_database.xlsx</code>. Update that file in GitHub/Vercel when you want to maintain the master movie list.</p>
-      <div class="file-row">
-        <button id="resetLocalBtn" class="secondary">Reset local progress</button>
-        <button id="downloadBtn" class="secondary">Download updated Excel</button>
-      </div>
-      <p id="loadStatus" class="status">Loading movie database…</p>
-    </section>
 
     <section class="dashboard">
       <div class="stat-card"><span id="totalCount">0</span><small>Total movies</small></div>
@@ -81,15 +72,29 @@
 
     <section class="panel table-panel">
       <h2>Movie list</h2>
-      <p class="status">Toggle watched status and ratings directly from the table. Watched films are excluded from future random picks.</p>
+      <p class="status">Toggle watched status, add comments, and rate movies directly from the table. Watched films are excluded from future random picks.</p>
+      <div class="toolbar">
+        <label for="movieSearch">Search movie</label>
+        <input id="movieSearch" type="search" placeholder="Search by movie title…" autocomplete="off" />
+      </div>
       <div class="table-wrap">
         <table id="movieTable">
           <thead>
-            <tr><th>Movie</th><th class="sortable" data-sort="rollup">Genre <span class="sort-indicator"></span></th><th class="sortable" data-sort="genre">Sub Genre <span class="sort-indicator"></span></th><th class="sortable" data-sort="country">Country <span class="sort-indicator"></span></th><th class="sortable" data-sort="year">Year <span class="sort-indicator"></span></th><th class="sortable" data-sort="watched">Seen <span class="sort-indicator"></span></th><th class="sortable" data-sort="rating">Rating <span class="sort-indicator"></span></th></tr>
+            <tr><th class="sortable" data-sort="title">Movie <span class="sort-indicator"></span></th><th class="sortable" data-sort="rollup">Genre <span class="sort-indicator"></span></th><th class="sortable" data-sort="genre">Sub Genre <span class="sort-indicator"></span></th><th class="sortable" data-sort="country">Country <span class="sort-indicator"></span></th><th class="sortable" data-sort="year">Year <span class="sort-indicator"></span></th><th class="sortable" data-sort="watched">Seen <span class="sort-indicator"></span></th><th>Comment</th><th class="sortable" data-sort="rating">Rating <span class="sort-indicator"></span></th></tr>
           </thead>
           <tbody></tbody>
         </table>
       </div>
+    </section>
+
+    <section class="panel intro-panel bottom-info">
+      <h2>Your movie data is loaded automatically</h2>
+      <p>The Excel file is included in the app background as <code>movie_database.xlsx</code>. Update that file in GitHub/Vercel when you want to maintain the master movie list.</p>
+      <div class="file-row">
+        <button id="resetLocalBtn" class="secondary">Reset local progress</button>
+        <button id="downloadBtn" class="secondary">Download updated Excel</button>
+      </div>
+      <p id="loadStatus" class="status">Loading movie database…</p>
     </section>
   </main>
 

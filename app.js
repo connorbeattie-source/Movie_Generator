@@ -4,8 +4,11 @@ let workbook = null;
 let worksheetName = 'Movies';
 
 const DATABASE_FILE = 'movie_database.xlsx';
-const PROGRESS_KEY = 'balancedMovieCanonProgressV3';
+const PROGRESS_KEY = 'balancedMovieCanonProgressV4';
+const LEGACY_PROGRESS_KEYS = ['balancedMovieCanonProgressV3', 'balancedMovieCanonProgressV2'];
+const CURRENT_PICK_KEY = 'balancedMovieCanonCurrentPickV4';
 let sortState = { key: null, direction: 'asc' };
+let movieSearchQuery = '';
 
 const els = {
   loadStatus: document.getElementById('loadStatus'),
@@ -28,6 +31,7 @@ const els = {
   resetLocalBtn: document.getElementById('resetLocalBtn'),
   clearRatingBtn: document.getElementById('clearRatingBtn'),
   tableBody: document.querySelector('#movieTable tbody'),
+  movieSearch: document.getElementById('movieSearch'),
   resultStars: [...document.querySelectorAll('.result-panel .star-control button[data-rating]')]
 };
 
@@ -40,12 +44,37 @@ function movieKey(title, year) {
 }
 
 function loadProgressStore() {
-  try { return JSON.parse(localStorage.getItem(PROGRESS_KEY)) || {}; }
-  catch { return {}; }
+  try {
+    const current = JSON.parse(localStorage.getItem(PROGRESS_KEY));
+    if (current && typeof current === 'object') return current;
+    for (const key of LEGACY_PROGRESS_KEYS) {
+      const legacy = JSON.parse(localStorage.getItem(key));
+      if (legacy && typeof legacy === 'object') {
+        localStorage.setItem(PROGRESS_KEY, JSON.stringify(legacy));
+        return legacy;
+      }
+    }
+    return {};
+  } catch { return {}; }
 }
 
 function saveProgressStore(store) {
   localStorage.setItem(PROGRESS_KEY, JSON.stringify(store));
+}
+
+function saveCurrentPick(movie) {
+  if (!movie) return localStorage.removeItem(CURRENT_PICK_KEY);
+  localStorage.setItem(CURRENT_PICK_KEY, movie.key);
+}
+
+function restoreCurrentPick() {
+  const savedKey = localStorage.getItem(CURRENT_PICK_KEY);
+  if (!savedKey) return;
+  const movie = findMovieByKey(savedKey);
+  if (movie) {
+    currentPick = movie;
+    renderResult(movie, { restored: true });
+  }
 }
 
 function persistMovie(movie) {
@@ -54,7 +83,7 @@ function persistMovie(movie) {
     watched: Boolean(movie.watched),
     rating: Number(movie.rating) || 0,
     dateWatched: movie.dateWatched || '',
-    notes: movie.notes || ''
+    comment: movie.comment || ''
   };
   saveProgressStore(store);
 }
@@ -88,7 +117,7 @@ function hydrateMovies(rows) {
       watched: Boolean(watched),
       rating: Number(saved.rating ?? row['rating'] ?? 0) || 0,
       dateWatched: saved.dateWatched || row['datewatched'] || '',
-      notes: saved.notes || row['notes'] || ''
+      comment: saved.comment ?? saved.notes ?? row['comment'] ?? row['notes'] ?? ''
     };
   }).filter(movie => movie.title);
 }
@@ -122,6 +151,7 @@ function parseWorkbook(arrayBuffer) {
   movies = hydrateMovies(rows);
   if (!movies.length) throw new Error('No movies found. Check the Movie title column.');
   renderAll();
+  restoreCurrentPick();
 }
 
 function uniqueGenres() {
@@ -142,7 +172,7 @@ function renderGenres() {
   uniqueGenres().forEach(genre => {
     const option = document.createElement('option');
     option.value = genre;
-    option.textContent = `${genre} (${movies.filter(m => m.rollup === genre && !m.watched).length} unwatched)`;
+    option.textContent = genre;
     els.genreSelect.appendChild(option);
   });
   if ([...els.genreSelect.options].some(o => o.value === selected)) els.genreSelect.value = selected;
@@ -154,7 +184,8 @@ function starMarkup(movie) {
 }
 
 function sortedMoviesForTable() {
-  const rows = [...movies];
+  const query = movieSearchQuery.trim().toLowerCase();
+  const rows = movies.filter(movie => !query || movie.title.toLowerCase().includes(query));
   if (!sortState.key) return rows;
   const direction = sortState.direction === 'asc' ? 1 : -1;
   return rows.sort((a, b) => {
@@ -194,6 +225,7 @@ function renderTable() {
       <td>${escapeHtml(movie.country)}</td>
       <td>${escapeHtml(movie.year)}</td>
       <td><label class="switch"><input type="checkbox" data-key="${escapeHtml(movie.key)}" class="watched-toggle" ${movie.watched ? 'checked' : ''}/><span></span></label></td>
+      <td><input class="comment-input" data-key="${escapeHtml(movie.key)}" type="text" value="${escapeHtml(movie.comment || '')}" placeholder="Add comment…" /></td>
       <td><div class="table-stars">${starMarkup(movie)}</div></td>
     `;
     els.tableBody.appendChild(tr);
@@ -233,11 +265,12 @@ function pickRandomMovie() {
     return;
   }
   currentPick = pool[Math.floor(Math.random() * pool.length)];
+  saveCurrentPick(currentPick);
   renderResult(currentPick);
   window.scrollTo({ top: els.resultPanel.offsetTop - 16, behavior: 'smooth' });
 }
 
-function renderResult(movie) {
+function renderResult(movie, options = {}) {
   els.resultTitle.textContent = movie.title;
   els.resultSummary.textContent = movie.summary || 'No summary available.';
   els.resultGenre.textContent = movie.rollup;
@@ -249,6 +282,7 @@ function renderResult(movie) {
   els.resultPanel.classList.remove('hidden');
 }
 
+
 function renderResultStars(rating) {
   const value = Number(rating) || 0;
   els.resultStars.forEach(btn => btn.classList.toggle('active', Number(btn.dataset.rating) <= value));
@@ -258,7 +292,13 @@ function setWatched(movie, watched) {
   movie.watched = Boolean(watched);
   movie.dateWatched = movie.watched ? (movie.dateWatched || todayIso()) : '';
   persistMovie(movie);
+  if (currentPick && currentPick.key === movie.key) saveCurrentPick(movie);
   renderAll();
+}
+
+function setComment(movie, comment) {
+  movie.comment = comment;
+  persistMovie(movie);
 }
 
 function setRating(movie, rating) {
@@ -287,10 +327,10 @@ function downloadUpdatedExcel() {
     'Watched': m.watched ? 'Yes' : 'No',
     'Rating': m.rating || '',
     'Date Watched': m.dateWatched || '',
-    'Notes': m.notes || ''
+    'Comment': m.comment || ''
   }));
 
-  const ws = XLSX.utils.json_to_sheet(rows, { header: ['Movie title','Genre','Rolled-up Genre','Country of film','Year of film made','Summary','Watched','Rating','Date Watched','Notes'] });
+  const ws = XLSX.utils.json_to_sheet(rows, { header: ['Movie title','Genre','Rolled-up Genre','Country of film','Year of film made','Summary','Watched','Rating','Date Watched','Comment'] });
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Movies');
   XLSX.writeFile(wb, 'movie_database_updated.xlsx');
@@ -306,10 +346,16 @@ document.querySelectorAll('input[name="pickMode"]').forEach(input => {
 els.pickBtn.addEventListener('click', pickRandomMovie);
 els.pickAgainBtn.addEventListener('click', pickRandomMovie);
 els.downloadBtn.addEventListener('click', downloadUpdatedExcel);
+els.movieSearch.addEventListener('input', () => {
+  movieSearchQuery = els.movieSearch.value || '';
+  renderTable();
+});
+
 els.resetLocalBtn.addEventListener('click', () => {
   if (!confirm('Reset watched status and ratings stored in this browser?')) return;
   localStorage.removeItem(PROGRESS_KEY);
-  movies = movies.map(m => ({ ...m, watched: false, rating: 0, dateWatched: '' }));
+  localStorage.removeItem(CURRENT_PICK_KEY);
+  movies = movies.map(m => ({ ...m, watched: false, rating: 0, dateWatched: '', comment: '' }));
   currentPick = null;
   els.resultPanel.classList.add('hidden');
   renderAll();
@@ -332,6 +378,12 @@ els.tableBody.addEventListener('change', event => {
   const movie = findMovieByKey(event.target.dataset.key);
   if (movie) setWatched(movie, event.target.checked);
 });
+els.tableBody.addEventListener('input', event => {
+  if (!event.target.classList.contains('comment-input')) return;
+  const movie = findMovieByKey(event.target.dataset.key);
+  if (movie) setComment(movie, event.target.value);
+});
+
 els.tableBody.addEventListener('click', event => {
   if (!event.target.classList.contains('table-star')) return;
   const movie = findMovieByKey(event.target.dataset.key);

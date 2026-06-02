@@ -53,3 +53,12 @@ http://localhost:8000
 - Renamed Specific genre to Sub Genre.
 - Added sortable table headers for Genre, Sub Genre, Country, Year, Seen, and Rating.
 - Clicking the 1-star rating clears the rating back to unrated.
+
+
+## v4 updates
+- Added sortable Movie column.
+- Added movie title search.
+- Added free-text Comment field, saved in browser local storage.
+- Moved the automatic Excel/database status panel to the bottom of the page.
+- Saves the current recommended movie so it is shown again on the next visit.
+- Removed visible "unwatched" wording from the genre selector.
