@@ -108,6 +108,9 @@ dd { margin: 4px 0 0; font-weight: 800; }
 table { width: 100%; border-collapse: collapse; min-width: 980px; }
 th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
 th { position: sticky; top: 0; background: #0b1220; z-index: 1; }
+th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+th.sortable:hover { color: var(--accent); }
+.sort-indicator { display: inline-block; min-width: 1em; color: var(--accent); font-size: .8rem; }
 td small { display: block; color: var(--muted); max-width: 460px; margin-top: 4px; line-height: 1.35; }
 tr.watched td { color: var(--muted); }
 tr.watched td:first-child strong { text-decoration: line-through; }

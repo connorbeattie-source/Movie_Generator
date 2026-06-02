@@ -28,7 +28,6 @@
     <section class="dashboard">
       <div class="stat-card"><span id="totalCount">0</span><small>Total movies</small></div>
       <div class="stat-card"><span id="watchedCount">0</span><small>Watched</small></div>
-      <div class="stat-card"><span id="unwatchedCount">0</span><small>Unwatched</small></div>
       <div class="stat-card"><span id="ratedCount">0</span><small>Rated</small></div>
     </section>
 
@@ -61,7 +60,7 @@
       <p id="resultSummary" class="summary"></p>
       <dl class="result-meta">
         <div><dt>Genre</dt><dd id="resultGenre"></dd></div>
-        <div><dt>Specific genre</dt><dd id="resultSpecificGenre"></dd></div>
+        <div><dt>Sub Genre</dt><dd id="resultSpecificGenre"></dd></div>
         <div><dt>Country</dt><dd id="resultCountry"></dd></div>
         <div><dt>Year</dt><dd id="resultYear"></dd></div>
       </dl>
@@ -86,7 +85,7 @@
       <div class="table-wrap">
         <table id="movieTable">
           <thead>
-            <tr><th>Movie</th><th>Genre</th><th>Specific genre</th><th>Country</th><th>Year</th><th>Seen</th><th>Rating</th></tr>
+            <tr><th>Movie</th><th class="sortable" data-sort="rollup">Genre <span class="sort-indicator"></span></th><th class="sortable" data-sort="genre">Sub Genre <span class="sort-indicator"></span></th><th class="sortable" data-sort="country">Country <span class="sort-indicator"></span></th><th class="sortable" data-sort="year">Year <span class="sort-indicator"></span></th><th class="sortable" data-sort="watched">Seen <span class="sort-indicator"></span></th><th class="sortable" data-sort="rating">Rating <span class="sort-indicator"></span></th></tr>
           </thead>
           <tbody></tbody>
         </table>

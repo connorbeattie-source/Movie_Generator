@@ -4,13 +4,13 @@ let workbook = null;
 let worksheetName = 'Movies';
 
 const DATABASE_FILE = 'movie_database.xlsx';
-const PROGRESS_KEY = 'balancedMovieCanonProgressV2';
+const PROGRESS_KEY = 'balancedMovieCanonProgressV3';
+let sortState = { key: null, direction: 'asc' };
 
 const els = {
   loadStatus: document.getElementById('loadStatus'),
   totalCount: document.getElementById('totalCount'),
   watchedCount: document.getElementById('watchedCount'),
-  unwatchedCount: document.getElementById('unwatchedCount'),
   ratedCount: document.getElementById('ratedCount'),
   genreControls: document.getElementById('genreControls'),
   genreSelect: document.getElementById('genreSelect'),
@@ -133,7 +133,6 @@ function renderStats() {
   const rated = movies.filter(m => Number(m.rating) > 0).length;
   els.totalCount.textContent = movies.length;
   els.watchedCount.textContent = watched;
-  els.unwatchedCount.textContent = movies.length - watched;
   els.ratedCount.textContent = rated;
 }
 
@@ -154,9 +153,38 @@ function starMarkup(movie) {
   return [1,2,3,4,5].map(n => `<button class="table-star ${n <= rating ? 'active' : ''}" data-key="${escapeHtml(movie.key)}" data-rating="${n}" aria-label="Rate ${n} star${n > 1 ? 's' : ''}">★</button>`).join('');
 }
 
+function sortedMoviesForTable() {
+  const rows = [...movies];
+  if (!sortState.key) return rows;
+  const direction = sortState.direction === 'asc' ? 1 : -1;
+  return rows.sort((a, b) => {
+    let av = a[sortState.key];
+    let bv = b[sortState.key];
+    if (sortState.key === 'year' || sortState.key === 'rating') {
+      av = Number(av) || 0;
+      bv = Number(bv) || 0;
+      return (av - bv) * direction;
+    }
+    if (sortState.key === 'watched') {
+      av = a.watched ? 1 : 0;
+      bv = b.watched ? 1 : 0;
+      return (av - bv) * direction;
+    }
+    return String(av || '').localeCompare(String(bv || ''), undefined, { sensitivity: 'base' }) * direction;
+  });
+}
+
+function updateSortIndicators() {
+  document.querySelectorAll('#movieTable th.sortable').forEach(th => {
+    const indicator = th.querySelector('.sort-indicator');
+    if (!indicator) return;
+    indicator.textContent = th.dataset.sort === sortState.key ? (sortState.direction === 'asc' ? '▲' : '▼') : '';
+  });
+}
+
 function renderTable() {
   els.tableBody.innerHTML = '';
-  movies.forEach(movie => {
+  sortedMoviesForTable().forEach(movie => {
     const tr = document.createElement('tr');
     if (movie.watched) tr.classList.add('watched');
     tr.innerHTML = `
@@ -170,6 +198,7 @@ function renderTable() {
     `;
     els.tableBody.appendChild(tr);
   });
+  updateSortIndicators();
 }
 
 function renderAll() {
@@ -291,7 +320,8 @@ els.resultWatchedToggle.addEventListener('change', () => {
 });
 els.resultStars.forEach(btn => btn.addEventListener('click', () => {
   if (!currentPick) return;
-  setRating(currentPick, btn.dataset.rating);
+  const selectedRating = Number(btn.dataset.rating);
+  setRating(currentPick, selectedRating === 1 ? 0 : selectedRating);
 }));
 els.clearRatingBtn.addEventListener('click', () => {
   if (!currentPick) return;
@@ -305,7 +335,23 @@ els.tableBody.addEventListener('change', event => {
 els.tableBody.addEventListener('click', event => {
   if (!event.target.classList.contains('table-star')) return;
   const movie = findMovieByKey(event.target.dataset.key);
-  if (movie) setRating(movie, event.target.dataset.rating);
+  if (movie) {
+    const selectedRating = Number(event.target.dataset.rating);
+    setRating(movie, selectedRating === 1 ? 0 : selectedRating);
+  }
+});
+
+document.querySelectorAll('#movieTable th.sortable').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.sort;
+    if (sortState.key === key) {
+      sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortState.key = key;
+      sortState.direction = key === 'year' || key === 'rating' ? 'desc' : 'asc';
+    }
+    renderTable();
+  });
 });
 
 loadEmbeddedWorkbook();
