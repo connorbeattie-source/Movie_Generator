@@ -57,17 +57,23 @@
         <div><dt>Country</dt><dd id="resultCountry"></dd></div>
         <div><dt>Year</dt><dd id="resultYear"></dd></div>
       </dl>
-      <div class="result-actions">
-        <label class="toggle-row"><input id="resultWatchedToggle" type="checkbox" /> Seen this movie</label>
-        <div class="star-control" aria-label="Rate this movie">
-          <span>Rate:</span>
-          <button data-rating="1" aria-label="1 star">★</button>
-          <button data-rating="2" aria-label="2 stars">★</button>
-          <button data-rating="3" aria-label="3 stars">★</button>
-          <button data-rating="4" aria-label="4 stars">★</button>
-          <button data-rating="5" aria-label="5 stars">★</button>
-          <button id="clearRatingBtn" class="tiny" type="button">Clear</button>
+      <div class="result-journal" aria-label="Your movie notes">
+        <div class="result-actions">
+          <label class="toggle-row"><input id="resultWatchedToggle" type="checkbox" /> Seen this movie</label>
+          <div id="resultDateWatchedWrap" class="date-watched hidden"><span>Date watched</span><strong id="resultDateWatched"></strong></div>
+          <div class="star-control" aria-label="Rate this movie">
+            <span>Rate:</span>
+            <button data-rating="1" aria-label="1 star">★</button>
+            <button data-rating="2" aria-label="2 stars">★</button>
+            <button data-rating="3" aria-label="3 stars">★</button>
+            <button data-rating="4" aria-label="4 stars">★</button>
+            <button data-rating="5" aria-label="5 stars">★</button>
+            <button id="clearRatingBtn" class="tiny" type="button">Clear</button>
+          </div>
         </div>
+        <label class="result-comment-label" for="resultComment">My notes / comment</label>
+        <textarea id="resultComment" class="result-comment-input" rows="4" placeholder="Add your thoughts on this movie…"></textarea>
+        <p class="status small-status">Comments, rating and seen status save automatically.</p>
         <button id="pickAgainBtn" class="secondary">Pick again</button>
       </div>
     </section>

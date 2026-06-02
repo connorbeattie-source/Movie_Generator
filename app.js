@@ -43,6 +43,9 @@ const els = {
   resultCountry: document.getElementById('resultCountry'),
   resultYear: document.getElementById('resultYear'),
   resultWatchedToggle: document.getElementById('resultWatchedToggle'),
+  resultDateWatchedWrap: document.getElementById('resultDateWatchedWrap'),
+  resultDateWatched: document.getElementById('resultDateWatched'),
+  resultComment: document.getElementById('resultComment'),
   pickAgainBtn: document.getElementById('pickAgainBtn'),
   downloadBtn: document.getElementById('downloadBtn'),
   resetLocalBtn: document.getElementById('resetLocalBtn'),
@@ -290,6 +293,13 @@ function todayIso() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function formatDate(isoValue) {
+  if (!isoValue) return '';
+  const date = new Date(`${isoValue}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return isoValue;
+  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
 function hydrateMovies(rows) {
   const progress = loadProgressStore();
   return rows.map((row, index) => {
@@ -475,6 +485,16 @@ function renderResult(movie) {
   els.resultCountry.textContent = movie.country;
   els.resultYear.textContent = movie.year;
   els.resultWatchedToggle.checked = Boolean(movie.watched);
+  if (els.resultComment && els.resultComment.value !== (movie.comment || '')) {
+    els.resultComment.value = movie.comment || '';
+  }
+  if (movie.watched && movie.dateWatched) {
+    els.resultDateWatched.textContent = formatDate(movie.dateWatched);
+    els.resultDateWatchedWrap.classList.remove('hidden');
+  } else {
+    els.resultDateWatched.textContent = '';
+    els.resultDateWatchedWrap.classList.add('hidden');
+  }
   renderResultStars(movie.rating);
   els.resultPanel.classList.remove('hidden');
 }
@@ -495,6 +515,9 @@ function setWatched(movie, watched) {
 function setComment(movie, comment) {
   movie.comment = comment;
   persistMovie(movie);
+  if (currentPick && currentPick.key === movie.key && els.resultComment && els.resultComment.value !== comment) {
+    els.resultComment.value = comment;
+  }
 }
 
 function setRating(movie, rating) {
@@ -562,6 +585,12 @@ els.resetLocalBtn.addEventListener('click', async () => {
 els.resultWatchedToggle.addEventListener('change', () => {
   if (!currentPick) return;
   setWatched(currentPick, els.resultWatchedToggle.checked);
+});
+
+els.resultComment.addEventListener('input', () => {
+  if (!currentPick) return;
+  setComment(currentPick, els.resultComment.value);
+  renderTable();
 });
 
 els.resultStars.forEach(btn => btn.addEventListener('click', () => {

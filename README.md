@@ -44,3 +44,7 @@ If it says `Could not save progress to database`, copy the full message from the
 - Dark high-contrast panels retained for readability.
 - Visible keyboard focus outlines added for accessibility.
 - Table/comment readability preserved on mobile with horizontal table scrolling.
+
+## v13 update
+
+The recommendation panel now includes the full tracking controls: seen toggle, auto date watched, star rating, and a multiline comment box. Updates save to Supabase and remain visible after refresh and across devices.
