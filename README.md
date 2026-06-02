@@ -1,4 +1,4 @@
-# Movie Randomizer App v10
+# Movie Randomizer App v11
 
 This version is configured with the supplied Supabase Project URL and anon public key.
 
@@ -29,3 +29,18 @@ Upload this full folder to Vercel, or replace the files in your GitHub repo and 
 4. In Supabase → Table Editor → `movie_app_progress`, check that a row appears.
 
 If it says `Could not save progress to database`, copy the full message from the bottom status area.
+
+
+## v11 update
+
+- Comment fields now use wrapping text areas instead of single-line inputs.
+- Long comments wrap within the table cell.
+- Comment column is more responsive on mobile/tablet.
+
+
+## v12 theme update
+
+- Creative popcorn/cinema background theme.
+- Dark high-contrast panels retained for readability.
+- Visible keyboard focus outlines added for accessibility.
+- Table/comment readability preserved on mobile with horizontal table scrolling.

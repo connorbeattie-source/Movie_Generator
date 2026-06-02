@@ -423,7 +423,7 @@ function renderTable() {
       <td>${escapeHtml(movie.year)}</td>
       <td><label class="switch"><input type="checkbox" data-key="${escapeHtml(movie.key)}" class="watched-toggle" ${movie.watched ? 'checked' : ''}/><span></span></label></td>
       <td><div class="table-stars">${starMarkup(movie)}</div></td>
-      <td><input class="comment-input" data-key="${escapeHtml(movie.key)}" type="text" value="${escapeHtml(movie.comment || '')}" placeholder="Add comment…" /></td>
+      <td><textarea class="comment-input" data-key="${escapeHtml(movie.key)}" rows="2" placeholder="Add comment…">${escapeHtml(movie.comment || '')}</textarea></td>
     `;
     els.tableBody.appendChild(tr);
   });
