@@ -1,6 +1,6 @@
-# Movie Randomizer App v6
+# Movie Randomizer App v7
 
-This version loads `movie_database.xlsx` automatically in the background and supports cross-device persistence using Supabase.
+This version loads `movie_database.xlsx` automatically in the background and uses Supabase as the shared cloud store for the current recommendation, watched status, ratings, and comments.
 
 ## What is included
 
@@ -16,7 +16,7 @@ This version loads `movie_database.xlsx` automatically in the background and sup
 
 ## Important: cross-device persistence
 
-Browser `localStorage` only works on one device. To make the current recommendation persist between phone and desktop, configure Supabase:
+To make the current recommendation, watched status, ratings, and comments persist between phone and desktop, configure Supabase:
 
 1. Create a free Supabase project.
 2. Open Supabase → SQL Editor.
@@ -28,7 +28,11 @@ Browser `localStorage` only works on one device. To make the current recommendat
 6. Commit the updated files to GitHub.
 7. Vercel will redeploy.
 
-After that, if you pick a movie on your phone, the same recommendation will appear when you open the app on your desktop.
+After that:
+
+- If you pick a movie on your phone, the same recommendation will appear when you open the app on your desktop.
+- If you mark a film as watched on desktop, it will be excluded on phone.
+- If you add a rating or comment on one device, it will load on the other device when you reopen the app.
 
 ## Files
 

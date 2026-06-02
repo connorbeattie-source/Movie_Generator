@@ -238,7 +238,7 @@ async function loadEmbeddedWorkbook() {
     if (!response.ok) throw new Error(`Could not load ${DATABASE_FILE}.`);
     const arrayBuffer = await response.arrayBuffer();
     parseWorkbook(arrayBuffer);
-    els.loadStatus.textContent = `Loaded ${movies.length} movies from the embedded Excel database. ${remoteEnabled ? 'Shared sync is active across devices.' : 'Shared sync is not configured, so progress is saved in this browser only.'}`;
+    els.loadStatus.textContent = `Loaded ${movies.length} movies from the embedded Excel database. ${remoteEnabled ? 'Shared sync is active: recommendation, watched status, ratings and comments are stored in Supabase.' : 'Shared sync is not configured, so recommendation, watched status, ratings and comments are saved in this browser only.'}`;
   } catch (error) {
     els.loadStatus.textContent = `Error: ${error.message} If running locally, use a local server rather than opening index.html directly.`;
   }
