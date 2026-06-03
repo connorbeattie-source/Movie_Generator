@@ -238,6 +238,31 @@ tr.watched td:first-child strong { text-decoration: line-through; }
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
 }
 
+
+.imdb-link-wrap {
+  margin: 0 0 18px;
+}
+.imdb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f5c518;
+  color: #111827;
+  border: 2px solid #111827;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 950;
+  text-decoration: none;
+  box-shadow: 0 8px 18px rgba(0,0,0,.25);
+}
+.imdb-link:hover,
+.imdb-link:focus-visible {
+  background: #ffe082;
+  color: #111827;
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+
 .result-journal {
   display: grid;
   gap: 14px;
@@ -301,7 +326,32 @@ tr.watched td:first-child strong { text-decoration: line-through; }
 .small-status { margin: -4px 0 0; font-size: .9rem; }
 
 @media (max-width: 760px) {
-  .result-journal { padding: 12px; }
+  
+.imdb-link-wrap {
+  margin: 0 0 18px;
+}
+.imdb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f5c518;
+  color: #111827;
+  border: 2px solid #111827;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 950;
+  text-decoration: none;
+  box-shadow: 0 8px 18px rgba(0,0,0,.25);
+}
+.imdb-link:hover,
+.imdb-link:focus-visible {
+  background: #ffe082;
+  color: #111827;
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.result-journal { padding: 12px; }
   .result-journal .result-actions { align-items: flex-start; flex-direction: column; }
   .star-control { flex-wrap: wrap; border-radius: 16px; }
   .result-comment-input { min-height: 130px; }

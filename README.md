@@ -48,3 +48,10 @@ If it says `Could not save progress to database`, copy the full message from the
 ## v13 update
 
 The recommendation panel now includes the full tracking controls: seen toggle, auto date watched, star rating, and a multiline comment box. Updates save to Supabase and remain visible after refresh and across devices.
+
+
+## IMDb links
+
+The Excel database now includes `IMDb ID` and `IMDb URL` columns. The app reads the `IMDb URL` first, then falls back to building a URL from `IMDb ID`, and finally creates an IMDb search link from the movie title and year if needed.
+
+No Supabase schema changes are required for IMDb links because these are static movie catalogue fields stored in `movie_database.xlsx`.

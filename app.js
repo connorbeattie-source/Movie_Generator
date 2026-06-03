@@ -42,6 +42,7 @@ const els = {
   resultSpecificGenre: document.getElementById('resultSpecificGenre'),
   resultCountry: document.getElementById('resultCountry'),
   resultYear: document.getElementById('resultYear'),
+  resultImdbLink: document.getElementById('resultImdbLink'),
   resultWatchedToggle: document.getElementById('resultWatchedToggle'),
   resultDateWatchedWrap: document.getElementById('resultDateWatchedWrap'),
   resultDateWatched: document.getElementById('resultDateWatched'),
@@ -61,6 +62,16 @@ function normaliseHeader(value) {
 
 function movieKey(title, year) {
   return `${String(title).trim().toLowerCase()}__${String(year).trim()}`;
+}
+
+
+function buildImdbUrl(row, title, year) {
+  const imdbUrl = row['imdburl'] || row['imdblink'] || row['imdb'];
+  const imdbId = row['imdbid'] || row['imdbtitleid'];
+  if (imdbUrl) return String(imdbUrl).trim();
+  if (imdbId) return `https://www.imdb.com/title/${String(imdbId).trim()}/`;
+  const query = encodeURIComponent(`${title} ${year || ''} IMDb`.trim());
+  return title ? `https://www.imdb.com/find/?q=${query}` : '';
 }
 
 function getConfig() {
@@ -317,6 +328,8 @@ function hydrateMovies(rows) {
       country: row['countryoffilm'] || row['country'] || '',
       year,
       summary: row['summary'] || row['imdbsummary'] || row['description'] || '',
+      imdbId: row['imdbid'] || row['imdbtitleid'] || '',
+      imdbUrl: buildImdbUrl(row, title, year),
       watched: Boolean(watched),
       rating: Number(saved.rating ?? row['rating'] ?? 0) || 0,
       dateWatched: saved.dateWatched || row['datewatched'] || '',
@@ -484,6 +497,16 @@ function renderResult(movie) {
   els.resultSpecificGenre.textContent = movie.genre;
   els.resultCountry.textContent = movie.country;
   els.resultYear.textContent = movie.year;
+  if (els.resultImdbLink) {
+    if (movie.imdbUrl) {
+      els.resultImdbLink.href = movie.imdbUrl;
+      els.resultImdbLink.classList.remove('hidden');
+      els.resultImdbLink.setAttribute('aria-label', `View ${movie.title} on IMDb`);
+    } else {
+      els.resultImdbLink.href = '#';
+      els.resultImdbLink.classList.add('hidden');
+    }
+  }
   els.resultWatchedToggle.checked = Boolean(movie.watched);
   if (els.resultComment && els.resultComment.value !== (movie.comment || '')) {
     els.resultComment.value = movie.comment || '';
@@ -543,13 +566,15 @@ function downloadUpdatedExcel() {
     'Country of film': m.country,
     'Year of film made': m.year,
     'Summary': m.summary,
+    'IMDb ID': m.imdbId || '',
+    'IMDb URL': m.imdbUrl || '',
     'Watched': m.watched ? 'Yes' : 'No',
     'Rating': m.rating || '',
     'Date Watched': m.dateWatched || '',
     'Comment': m.comment || ''
   }));
 
-  const ws = XLSX.utils.json_to_sheet(rows, { header: ['Movie title','Genre','Rolled-up Genre','Country of film','Year of film made','Summary','Watched','Rating','Date Watched','Comment'] });
+  const ws = XLSX.utils.json_to_sheet(rows, { header: ['Movie title','Genre','Rolled-up Genre','Country of film','Year of film made','Summary','IMDb ID','IMDb URL','Watched','Rating','Date Watched','Comment'] });
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Movies');
   XLSX.writeFile(wb, 'movie_database_updated.xlsx');
